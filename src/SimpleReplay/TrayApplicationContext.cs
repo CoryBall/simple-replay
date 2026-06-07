@@ -27,8 +27,24 @@ public sealed class TrayApplicationContext : ApplicationContext
             ContextMenuStrip = BuildContextMenu(),
         };
 
+        // On first launch after install, download ffmpeg before starting capture
+        var bootstrapper = new FfmpegBootstrapper();
+        if (!bootstrapper.IsInstalled)
+        {
+            using var dlg = new FfmpegDownloadForm();
+            if (dlg.ShowDialog() != DialogResult.OK)
+            {
+                _trayIcon.Visible = false;
+                Application.Exit();
+                return;
+            }
+        }
+
         RegisterHotkey();
         _orchestrator.StartCapture();
+
+        // Check for updates in the background — downloaded update applies on next launch
+        _ = new UpdateService().CheckAndDownloadAsync();
     }
 
     private ContextMenuStrip BuildContextMenu()

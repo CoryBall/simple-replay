@@ -33,6 +33,15 @@
       "group": "build",
       "presentation": { "reveal": "always" },
       "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "pack (velopack)",
+      "type": "shell",
+      "command": "vpk pack --packId SimpleReplay --packVersion 1.0.0-dev --packDir publish --mainExe SimpleReplay.exe --packTitle 'Simple Replay' --framework net8desktop --outputDir releases",
+      "group": "build",
+      "dependsOn": "publish (release)",
+      "presentation": { "reveal": "always" },
+      "problemMatcher": []
     }
   ]
 }

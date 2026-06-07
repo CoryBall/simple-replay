@@ -14,12 +14,13 @@ A Windows system tray app that keeps a rolling buffer of your screen and saves t
 
 ## Installation
 
-1. Download `SimpleReplay.exe` and `install.ps1` from the [latest release](../../releases/latest) into the same folder.
-2. Right-click `install.ps1` → **Run with PowerShell**.
-
-The script will install the .NET 8 Desktop Runtime if missing, download ffmpeg to `%APPDATA%\SimpleReplay\tools\`, and create Desktop and Start Menu shortcuts.
+1. Download `SimpleReplay-win-x64-Setup.exe` from the [latest release](../../releases/latest).
+2. Run it. The installer handles the .NET 8 Desktop Runtime if it's not already present and creates Desktop and Start Menu shortcuts.
+3. On first launch, the app will download ffmpeg (~80 MB, one-time) before starting.
 
 To run on startup, copy the Start Menu shortcut to `shell:startup` (open with `Win+R`).
+
+Updates are downloaded automatically in the background and applied the next time the app is launched.
 
 ---
 
