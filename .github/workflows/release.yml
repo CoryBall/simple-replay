@@ -51,7 +51,7 @@ jobs:
             --packDir publish `
             --mainExe SimpleReplay.exe `
             --packTitle "Simple Replay" `
-            --framework net8desktop `
+            --framework net8.0-x64-desktop `
             --outputDir releases
 
       - name: Create GitHub release
