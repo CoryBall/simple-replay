@@ -1,0 +1,9 @@
+# Build outputs
+publish/
+tools/
+src/**/bin/
+src/**/obj/
+
+# User settings (stored in %APPDATA%, not the repo)
+*.user
+.claude/settings.local.json

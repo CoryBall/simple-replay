@@ -1,0 +1,61 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write  # required to create tags and releases
+
+jobs:
+  release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Build
+        shell: pwsh
+        run: |
+          dotnet publish src/SimpleReplay/SimpleReplay.csproj `
+            -c Release `
+            -r win-x64 `
+            --no-self-contained `
+            -p:PublishSingleFile=true `
+            -o publish
+
+      - name: Generate version tag
+        id: tag
+        shell: pwsh
+        run: |
+          $date = Get-Date -Format "yyyy.MM.dd"
+          $sha  = "${{ github.sha }}".Substring(0, 7)
+          "value=v$date-$sha" >> $env:GITHUB_OUTPUT
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.value }}
+          name: SimpleReplay ${{ steps.tag.outputs.value }}
+          generate_release_notes: true
+          body: |
+            ### Install
+            1. Download `SimpleReplay.exe` and `install.ps1` into the same folder
+            2. Right-click `install.ps1` → **Run with PowerShell**
+               - Installs .NET 8 Desktop Runtime (if missing)
+               - Downloads ffmpeg (~80 MB, one-time)
+               - Creates Desktop and Start Menu shortcuts
+            3. Launch via the shortcut or `SimpleReplay.exe` directly
+
+            **Default hotkey:** `Ctrl+Shift+F9` — saves the last 5 minutes of screen capture.
+            Right-click the tray icon to open Settings.
+
+          files: |
+            publish/SimpleReplay.exe
+            install.ps1
