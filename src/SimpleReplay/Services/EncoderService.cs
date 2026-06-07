@@ -97,7 +97,7 @@ public sealed class EncoderService
         return true;
     }
 
-    private static string ResolveCodec(string codec, string hwAccel) => (codec, hwAccel) switch
+    internal static string ResolveCodec(string codec, string hwAccel) => (codec, hwAccel) switch
     {
         ("h265", "nvenc") => "hevc_nvenc",
         ("h265", "qsv")   => "hevc_qsv",
@@ -109,7 +109,7 @@ public sealed class EncoderService
         _                 => "libx264",
     };
 
-    private static string BuildArgs(int fps, string videoCodec, string baseCodec, string preset, int crf, string outputPath)
+    internal static string BuildArgs(int fps, string videoCodec, string baseCodec, string preset, int crf, string outputPath)
     {
         var sb = new StringBuilder();
 

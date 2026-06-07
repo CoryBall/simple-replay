@@ -5,7 +5,7 @@ namespace SimpleReplay.Services;
 public sealed class FfmpegBootstrapper
 {
     private const string DownloadUrl =
-        "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl-small.zip";
+        "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip";
 
     public static readonly string FfmpegExePath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),

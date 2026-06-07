@@ -5,7 +5,13 @@ namespace SimpleReplay.Services;
 public sealed class FrameBuffer
 {
     private readonly ConcurrentQueue<(long TimestampMs, byte[] JpegBytes)> _queue = new();
-    private long _bufferMs = TimeSpan.FromMinutes(5).Milliseconds;
+    private readonly Func<long> _clock;
+    private long _bufferMs = (long)TimeSpan.FromMinutes(5).TotalMilliseconds;
+
+    public FrameBuffer(Func<long>? clock = null)
+    {
+        _clock = clock ?? (() => Environment.TickCount64);
+    }
 
     public void SetBufferDuration(int minutes)
     {
@@ -14,7 +20,7 @@ public sealed class FrameBuffer
 
     public void Push(byte[] jpegBytes)
     {
-        var now = Environment.TickCount64;
+        var now = _clock();
         _queue.Enqueue((now, jpegBytes));
         Evict(now);
     }

@@ -33,7 +33,7 @@ public sealed class HotkeyService : IDisposable
         _callback?.Invoke();
     }
 
-    private static Keys ParseHotkey(string hotkey)
+    internal static Keys ParseHotkey(string hotkey)
     {
         var result = Keys.None;
 

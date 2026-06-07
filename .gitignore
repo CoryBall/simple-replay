@@ -3,6 +3,8 @@ publish/
 tools/
 src/**/bin/
 src/**/obj/
+tests/**/bin/
+tests/**/obj/
 
 # User settings (stored in %APPDATA%, not the repo)
 *.user

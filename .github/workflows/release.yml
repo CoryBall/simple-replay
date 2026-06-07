@@ -23,6 +23,9 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
+      - name: Test
+        run: dotnet test tests/SimpleReplay.Tests/SimpleReplay.Tests.csproj --configuration Release --verbosity normal
+
       - name: Install vpk
         run: dotnet tool install -g vpk
 

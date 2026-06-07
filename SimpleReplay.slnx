@@ -2,4 +2,7 @@
   <Folder Name="/src/">
     <Project Path="src/SimpleReplay/SimpleReplay.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SimpleReplay.Tests/SimpleReplay.Tests.csproj" />
+  </Folder>
 </Solution>
