@@ -9,6 +9,7 @@ public class AppSettings
     public int Height { get; set; } = 720;
     public string OutputDirectory { get; set; } =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyVideos), "SimpleReplay");
+    public string MonitorDeviceName { get; set; } = ""; // empty = primary
     public string Codec { get; set; } = "h264";
     public string Preset { get; set; } = "ultrafast";
     public int Crf { get; set; } = 23;

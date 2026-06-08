@@ -69,11 +69,12 @@ public sealed class TrayApplicationContext : ApplicationContext
         var next = form.Settings;
 
         bool captureChanged =
-            next.Fps            != _settings.Fps            ||
-            next.Width          != _settings.Width          ||
-            next.Height         != _settings.Height         ||
-            next.BufferMinutes  != _settings.BufferMinutes  ||
-            next.BufferJpegQuality != _settings.BufferJpegQuality;
+            next.Fps               != _settings.Fps               ||
+            next.Width             != _settings.Width             ||
+            next.Height            != _settings.Height            ||
+            next.BufferMinutes     != _settings.BufferMinutes     ||
+            next.BufferJpegQuality != _settings.BufferJpegQuality ||
+            next.MonitorDeviceName != _settings.MonitorDeviceName;
 
         if (captureChanged && _orchestrator.BufferFrameCount > 0)
         {

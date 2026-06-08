@@ -23,7 +23,8 @@ public sealed class OrchestratorService : IDisposable
         _buffer.Clear();
         _buffer.SetBufferDuration(_settings.BufferMinutes);
         _capture = new CaptureService(
-            _buffer, _settings.Fps, _settings.Width, _settings.Height, _settings.BufferJpegQuality);
+            _buffer, _settings.Fps, _settings.Width, _settings.Height,
+            _settings.BufferJpegQuality, _settings.MonitorDeviceName);
         _capture.Start();
     }
 

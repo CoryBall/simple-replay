@@ -10,17 +10,19 @@ public sealed class CaptureService : IDisposable
     private readonly int _fps;
     private readonly int _width;
     private readonly int _height;
+    private readonly string _monitorDeviceName;
     private readonly ImageCodecInfo _jpegCodec;
     private readonly EncoderParameters _encoderParams;
     private Thread? _thread;
     private volatile bool _running;
 
-    public CaptureService(FrameBuffer buffer, int fps, int width, int height, int jpegQuality)
+    public CaptureService(FrameBuffer buffer, int fps, int width, int height, int jpegQuality, string monitorDeviceName = "")
     {
         _buffer = buffer;
         _fps = fps;
         _width = width;
         _height = height;
+        _monitorDeviceName = monitorDeviceName;
         _jpegCodec = ImageCodecInfo.GetImageEncoders().First(c => c.FormatID == ImageFormat.Jpeg.Guid);
         _encoderParams = new EncoderParameters(1);
         _encoderParams.Param[0] = new EncoderParameter(Encoder.Quality, (long)jpegQuality);
@@ -43,7 +45,11 @@ public sealed class CaptureService : IDisposable
     private void CaptureLoop()
     {
         var intervalMs = 1000.0 / _fps;
-        var srcBounds = Screen.PrimaryScreen!.Bounds;
+        var screen = string.IsNullOrEmpty(_monitorDeviceName)
+            ? Screen.PrimaryScreen!
+            : Screen.AllScreens.FirstOrDefault(s => s.DeviceName == _monitorDeviceName)
+              ?? Screen.PrimaryScreen!;
+        var srcBounds = screen.Bounds;
 
         using var srcBitmap = new Bitmap(srcBounds.Width, srcBounds.Height, PixelFormat.Format32bppArgb);
         using var captureGraphics = Graphics.FromImage(srcBitmap);

@@ -9,6 +9,8 @@ public sealed class SettingsForm : Form
     public AppSettings Settings { get; private set; }
 
     private HotkeyBox _hotkeyBox = null!;
+    private ComboBox _monitor = null!;
+    private List<Screen> _screens = null!;
     private NumericUpDown _bufferMinutes = null!;
     private NumericUpDown _fps = null!;
     private NumericUpDown _width = null!;
@@ -80,6 +82,17 @@ public sealed class SettingsForm : Form
 
         AddRow(outer, r++, "Hotkey",
             _hotkeyBox = new HotkeyBox { Dock = DockStyle.Fill });
+
+        _screens = Screen.AllScreens.OrderBy(s => s.Bounds.X).ToList();
+        _monitor = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Fill };
+        for (int i = 0; i < _screens.Count; i++)
+        {
+            var s = _screens[i];
+            var label = $"Display {i + 1}{(s.Primary ? " (Primary)" : "")} — {s.Bounds.Width}×{s.Bounds.Height}";
+            _monitor.Items.Add(label);
+        }
+        _monitor.SelectedIndexChanged += OnMonitorChanged;
+        AddRow(outer, r++, "Monitor", _monitor);
 
         AddRow(outer, r++, "Buffer (minutes)",
             _bufferMinutes = Spinner(1, 60));
@@ -170,10 +183,21 @@ public sealed class SettingsForm : Form
         return panel;
     }
 
+    private void OnMonitorChanged(object? sender, EventArgs e)
+    {
+        if (_monitor.SelectedIndex < 0 || _monitor.SelectedIndex >= _screens.Count) return;
+        var s = _screens[_monitor.SelectedIndex];
+        _width.Value  = Clamp(s.Bounds.Width,  320, 3840);
+        _height.Value = Clamp(s.Bounds.Height, 240, 2160);
+    }
+
     private void WireDescriptions()
     {
         Describe(_hotkeyBox,
             "The key combination that triggers saving the replay. Click the box and press your desired combo (e.g. Ctrl+Shift+F9). Press Escape to cancel.");
+
+        Describe(_monitor,
+            "Which monitor to capture. Selecting a monitor automatically fills in the width and height to match its native resolution, but you can adjust them freely.");
 
         Describe(_bufferMinutes,
             "How many minutes of footage to keep in memory at all times. Longer buffers let you save more of the past but use more RAM (~300 MB per 5 min at default settings).");
@@ -217,6 +241,12 @@ public sealed class SettingsForm : Form
     private void LoadValues()
     {
         _hotkeyBox.Hotkey = Settings.Hotkey;
+
+        // Select the saved monitor, fall back to primary
+        var monitorIdx = _screens.FindIndex(s => s.DeviceName == Settings.MonitorDeviceName);
+        if (monitorIdx < 0) monitorIdx = _screens.FindIndex(s => s.Primary);
+        _monitor.SelectedIndex = Math.Max(0, monitorIdx);
+
         _bufferMinutes.Value = Clamp(Settings.BufferMinutes, 1, 60);
         _fps.Value = Clamp(Settings.Fps, 1, 60);
         _width.Value = Clamp(Settings.Width, 320, 3840);
@@ -235,6 +265,9 @@ public sealed class SettingsForm : Form
     private void OnSave(object? sender, EventArgs e)
     {
         Settings.Hotkey = _hotkeyBox.Hotkey;
+        Settings.MonitorDeviceName = _monitor.SelectedIndex >= 0 && _monitor.SelectedIndex < _screens.Count
+            ? _screens[_monitor.SelectedIndex].DeviceName
+            : "";
         Settings.BufferMinutes = (int)_bufferMinutes.Value;
         Settings.Fps = (int)_fps.Value;
         Settings.Width = (int)_width.Value;
