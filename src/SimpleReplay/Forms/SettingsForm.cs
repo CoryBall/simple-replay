@@ -8,7 +8,7 @@ public sealed class SettingsForm : Form
 {
     public AppSettings Settings { get; private set; }
 
-    private TextBox _hotkeyBox = null!;
+    private HotkeyBox _hotkeyBox = null!;
     private NumericUpDown _bufferMinutes = null!;
     private NumericUpDown _fps = null!;
     private NumericUpDown _width = null!;
@@ -21,10 +21,10 @@ public sealed class SettingsForm : Form
     private ComboBox _hwAccel = null!;
     private TrackBar _bufferJpegQuality = null!;
     private Label _jpegQualityLabel = null!;
+    private Label _descLabel = null!;
 
     public SettingsForm(AppSettings current)
     {
-        // Clone so Cancel truly discards
         Settings = new AppSettings
         {
             Hotkey = current.Hotkey,
@@ -41,18 +41,31 @@ public sealed class SettingsForm : Form
         };
         BuildUI();
         LoadValues();
+        WireDescriptions();
     }
 
     private void BuildUI()
     {
         Text = "Simple Replay — Settings";
-        Size = new Size(460, 580);
+        Size = new Size(460, 660);
         FormBorderStyle = FormBorderStyle.FixedDialog;
         MaximizeBox = false;
         MinimizeBox = false;
         StartPosition = FormStartPosition.CenterScreen;
         Font = new Font("Segoe UI", 9f);
 
+        // Root splits settings area from description panel
+        var root = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            RowCount = 2,
+            ColumnCount = 1,
+            Padding = Padding.Empty,
+        };
+        root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 78));
+
+        // ── Settings rows ───────────────────────────────────────────────────────
         var outer = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
@@ -66,7 +79,7 @@ public sealed class SettingsForm : Form
         int r = 0;
 
         AddRow(outer, r++, "Hotkey",
-            _hotkeyBox = new TextBox { Dock = DockStyle.Fill });
+            _hotkeyBox = new HotkeyBox { Dock = DockStyle.Fill });
 
         AddRow(outer, r++, "Buffer (minutes)",
             _bufferMinutes = Spinner(1, 60));
@@ -102,7 +115,6 @@ public sealed class SettingsForm : Form
         _bufferJpegQuality.ValueChanged += (_, _) => _jpegQualityLabel.Text = $"Buffer quality: {_bufferJpegQuality.Value}";
         AddRow(outer, r++, _jpegQualityLabel, _bufferJpegQuality);
 
-        // Button row
         var btnRow = new FlowLayoutPanel
         {
             Dock = DockStyle.Fill,
@@ -113,11 +125,31 @@ public sealed class SettingsForm : Form
         var btnCancel = new Button { Text = "Cancel", DialogResult = DialogResult.Cancel, Width = 80 };
         btnSave.Click += OnSave;
         btnRow.Controls.AddRange(new Control[] { btnCancel, btnSave });
-
         outer.Controls.Add(btnRow);
         outer.SetColumnSpan(btnRow, 2);
 
-        Controls.Add(outer);
+        // ── Description panel ───────────────────────────────────────────────────
+        var descPanel = new Panel
+        {
+            Dock = DockStyle.Fill,
+            BackColor = Color.FromArgb(255, 255, 225),
+            Padding = new Padding(10, 6, 10, 6),
+        };
+        var topBorder = new Panel { Dock = DockStyle.Top, Height = 1, BackColor = SystemColors.ControlDark };
+        _descLabel = new Label
+        {
+            Dock = DockStyle.Fill,
+            AutoSize = false,
+            TextAlign = ContentAlignment.TopLeft,
+            ForeColor = SystemColors.InfoText,
+            Text = "Hover over a setting to see its description.",
+        };
+        descPanel.Controls.Add(_descLabel);
+        descPanel.Controls.Add(topBorder);
+
+        root.Controls.Add(outer,      0, 0);
+        root.Controls.Add(descPanel,  0, 1);
+        Controls.Add(root);
         AcceptButton = btnSave;
         CancelButton = btnCancel;
     }
@@ -138,9 +170,53 @@ public sealed class SettingsForm : Form
         return panel;
     }
 
+    private void WireDescriptions()
+    {
+        Describe(_hotkeyBox,
+            "The key combination that triggers saving the replay. Click the box and press your desired combo (e.g. Ctrl+Shift+F9). Press Escape to cancel.");
+
+        Describe(_bufferMinutes,
+            "How many minutes of footage to keep in memory at all times. Longer buffers let you save more of the past but use more RAM (~300 MB per 5 min at default settings).");
+
+        Describe(_fps,
+            "Frames captured per second. Higher values produce smoother video but increase CPU usage and RAM. 30 fps is a good balance; 60 fps is noticeably smoother for fast action.");
+
+        Describe(_width,
+            "Width of the saved video in pixels. 1280 (720p) is a good default. Use 1920 for full HD — this increases encoding time and file size.");
+
+        Describe(_height,
+            "Height of the saved video in pixels. 720 gives 1280×720 (HD). Use 1080 for 1920×1080 (Full HD). Should match your width choice.");
+
+        Describe(_outputDir,
+            "Folder where saved replay videos are written. Each file is named replay_YYYYMMDD_HHMMSS.mp4. Click … to browse.");
+
+        Describe(_codec,
+            "Video compression format. h264 is universally compatible with all players and fast to encode. h265 (HEVC) produces ~40% smaller files but encodes slower and requires a capable player.");
+
+        Describe(_preset,
+            "Encoding speed vs. file size tradeoff. 'ultrafast' saves in seconds with larger files; 'slow' takes longer but produces smaller files. For a replay buffer, 'ultrafast' or 'superfast' is recommended.");
+
+        Describe(_crf,
+            "Constant Rate Factor — controls quality vs. file size. Lower = better quality, larger file. 18–28 is a typical range; 23 is the default. Has no effect when using hardware acceleration (nvenc/qsv/amf).");
+
+        Describe(_hwAccel,
+            "Use your GPU to encode video, which is much faster than CPU. 'nvenc' = NVIDIA, 'qsv' = Intel, 'amf' = AMD. If your GPU doesn't support it, encoding automatically falls back to CPU.");
+
+        Describe(_bufferJpegQuality,
+            "JPEG compression quality for frames held in RAM. Higher = better image fidelity but more memory used. Lower = smaller RAM footprint but slight quality loss before encoding. 55 is a good balance.");
+    }
+
+    private void Describe(Control ctrl, string text)
+    {
+        ctrl.MouseEnter += (_, _) => _descLabel.Text = text;
+        ctrl.Enter      += (_, _) => _descLabel.Text = text;
+        ctrl.MouseLeave += (_, _) => { if (!ctrl.Focused) _descLabel.Text = "Hover over a setting to see its description."; };
+        ctrl.Leave      += (_, _) => _descLabel.Text = "Hover over a setting to see its description.";
+    }
+
     private void LoadValues()
     {
-        _hotkeyBox.Text = Settings.Hotkey;
+        _hotkeyBox.Hotkey = Settings.Hotkey;
         _bufferMinutes.Value = Clamp(Settings.BufferMinutes, 1, 60);
         _fps.Value = Clamp(Settings.Fps, 1, 60);
         _width.Value = Clamp(Settings.Width, 320, 3840);
@@ -158,7 +234,7 @@ public sealed class SettingsForm : Form
 
     private void OnSave(object? sender, EventArgs e)
     {
-        Settings.Hotkey = _hotkeyBox.Text.Trim();
+        Settings.Hotkey = _hotkeyBox.Hotkey;
         Settings.BufferMinutes = (int)_bufferMinutes.Value;
         Settings.Fps = (int)_fps.Value;
         Settings.Width = (int)_width.Value;

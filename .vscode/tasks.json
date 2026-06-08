@@ -42,6 +42,22 @@
       "dependsOn": "publish (release)",
       "presentation": { "reveal": "always" },
       "problemMatcher": []
+    },
+    {
+      "label": "vpk pack (local test)",
+      "type": "shell",
+      "command": "Remove-Item -Recurse -Force releases-test -ErrorAction SilentlyContinue; vpk pack --packId SimpleReplayTest --packVersion 1.0.0-test --packDir publish --mainExe SimpleReplay.exe --packTitle 'Simple Replay (Test)' --framework net8.0-x64-desktop --outputDir releases-test",
+      "group": "build",
+      "presentation": { "reveal": "always" },
+      "problemMatcher": []
+    },
+    {
+      "label": "publish and pack (local test)",
+      "dependsOn": ["publish (release)", "vpk pack (local test)"],
+      "dependsOrder": "sequence",
+      "group": "build",
+      "presentation": { "reveal": "always" },
+      "problemMatcher": []
     }
   ]
 }

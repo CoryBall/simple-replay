@@ -30,6 +30,7 @@ public sealed class EncoderService
         string preset,
         int crf,
         string hwAccel,
+        double inputFps = 0,
         IProgress<int>? progress = null,
         CancellationToken ct = default)
     {
@@ -40,7 +41,7 @@ public sealed class EncoderService
         Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
 
         var videoCodec = ResolveCodec(codec, hwAccel);
-        var args = BuildArgs(fps, videoCodec, codec, preset, crf, outputPath);
+        var args = BuildArgs(fps, videoCodec, codec, preset, crf, outputPath, inputFps);
 
         var stderr = new StringBuilder();
         using var process = new Process
@@ -89,7 +90,7 @@ public sealed class EncoderService
         {
             // If hardware accel failed, retry with software fallback
             if (hwAccel != "none")
-                return await EncodeAsync(frames, fps, outputPath, codec, preset, crf, "none", progress, ct);
+                return await EncodeAsync(frames, fps, outputPath, codec, preset, crf, "none", inputFps, progress, ct);
 
             throw new InvalidOperationException($"ffmpeg exited with code {process.ExitCode}:\n{stderr}");
         }
@@ -109,12 +110,17 @@ public sealed class EncoderService
         _                 => "libx264",
     };
 
-    internal static string BuildArgs(int fps, string videoCodec, string baseCodec, string preset, int crf, string outputPath)
+    internal static string BuildArgs(int fps, string videoCodec, string baseCodec, string preset, int crf, string outputPath, double inputFps = 0)
     {
         var sb = new StringBuilder();
 
-        // Read JPEG frames from stdin as mjpeg stream
-        sb.Append($"-r {fps} -f image2pipe -vcodec mjpeg -i pipe:0 ");
+        // Use actual captured fps for input so timing stays correct regardless of target fps
+        var inFps = inputFps > 0 ? inputFps : fps;
+        var inFpsStr = inFps % 1 == 0 ? ((int)inFps).ToString() : inFps.ToString("F3");
+        sb.Append($"-r {inFpsStr} -f image2pipe -vcodec mjpeg -i pipe:0 ");
+
+        // Force output to the user's target fps (ffmpeg will duplicate/drop frames as needed)
+        sb.Append($"-r {fps} ");
 
         sb.Append($"-c:v {videoCodec} ");
 

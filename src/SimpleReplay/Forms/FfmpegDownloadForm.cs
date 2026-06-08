@@ -84,7 +84,7 @@ public sealed class FfmpegDownloadForm : Form
         catch (Exception ex)
         {
             MessageBox.Show(
-                $"Failed to download ffmpeg:\n\n{ex.Message}\n\nCheck your internet connection and try again.",
+                $"Failed to download ffmpeg: {ex.Message}\n\nCheck your internet connection and try again.",
                 "Simple Replay", MessageBoxButtons.OK, MessageBoxIcon.Error);
             DialogResult = DialogResult.Abort;
             Close();

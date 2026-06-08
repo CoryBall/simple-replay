@@ -1,0 +1,28 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/src/SimpleReplay/bin/Debug/net8.0-windows10.0.19041.0/SimpleReplay.exe",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "stopAtEntry": false,
+      "console": "internalConsole"
+    },
+    {
+      "name": "Install (local test)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "publish and pack (local test)",
+      "program": "${workspaceFolder}/releases-test/SimpleReplayTest-win-Setup.exe",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "stopAtEntry": false,
+      "console": "internalConsole",
+      "noDebug": true
+    }
+  ]
+}

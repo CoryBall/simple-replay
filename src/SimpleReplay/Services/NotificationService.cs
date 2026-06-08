@@ -1,39 +1,42 @@
-using Microsoft.Toolkit.Uwp.Notifications;
+using System.Windows.Forms;
 
 namespace SimpleReplay.Services;
 
-public static class NotificationService
+public sealed class NotificationService
 {
-    public static void ShowSaving(int frameCount, int fps)
+    private readonly NotifyIcon _trayIcon;
+    private readonly SynchronizationContext _sync;
+
+    public NotificationService(NotifyIcon trayIcon)
     {
-        var durationSec = fps > 0 ? frameCount / fps : 0;
-        TryShow("Simple Replay", $"Saving {durationSec}s replay...");
+        _trayIcon = trayIcon;
+        _sync = SynchronizationContext.Current ?? new SynchronizationContext();
     }
 
-    public static void ShowSaved(string filePath, long fileSizeBytes, int frameCount, int fps)
+    public void ShowSaving(int frameCount, int fps)
+    {
+        var durationSec = fps > 0 ? frameCount / fps : 0;
+        Show("Saving replay…", $"Encoding {durationSec}s of footage.", ToolTipIcon.Info);
+    }
+
+    public void ShowSaved(string filePath, long fileSizeBytes, int frameCount, int fps)
     {
         var durationSec = fps > 0 ? frameCount / fps : 0;
         var sizeMb = fileSizeBytes / (1024.0 * 1024.0);
-        TryShow("Simple Replay — Saved!", $"{durationSec}s · {sizeMb:F1} MB → {Path.GetFileName(filePath)}");
+        Show("Replay saved!", $"{durationSec}s · {sizeMb:F1} MB → {Path.GetFileName(filePath)}", ToolTipIcon.Info);
     }
 
-    public static void ShowError(string message)
+    public void ShowError(string message)
     {
-        TryShow("Simple Replay — Error", message);
+        Show("Simple Replay — Error", message, ToolTipIcon.Error);
     }
 
-    private static void TryShow(string title, string body)
+    private void Show(string title, string body, ToolTipIcon icon)
     {
-        try
+        _sync.Post(_ =>
         {
-            new ToastContentBuilder()
-                .AddText(title)
-                .AddText(body)
-                .Show();
-        }
-        catch
-        {
-            // Toast notifications may be unavailable (e.g. Focus Assist, policy)
-        }
+            try { _trayIcon.ShowBalloonTip(4000, title, body, icon); }
+            catch { }
+        }, null);
     }
 }

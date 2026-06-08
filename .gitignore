@@ -1,5 +1,6 @@
 # Build outputs
 publish/
+releases-test/
 tools/
 src/**/bin/
 src/**/obj/

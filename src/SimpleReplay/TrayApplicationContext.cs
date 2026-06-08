@@ -17,7 +17,6 @@ public sealed class TrayApplicationContext : ApplicationContext
     public TrayApplicationContext()
     {
         _settings = _settingsService.Load();
-        _orchestrator = new OrchestratorService(_settings);
 
         _trayIcon = new NotifyIcon
         {
@@ -26,6 +25,9 @@ public sealed class TrayApplicationContext : ApplicationContext
             Visible = true,
             ContextMenuStrip = BuildContextMenu(),
         };
+
+        var notifications = new NotificationService(_trayIcon);
+        _orchestrator = new OrchestratorService(_settings, notifications);
 
         // On first launch after install, download ffmpeg before starting capture
         var bootstrapper = new FfmpegBootstrapper();
@@ -64,11 +66,37 @@ public sealed class TrayApplicationContext : ApplicationContext
         if (form.ShowDialog() != DialogResult.OK)
             return;
 
-        _settings = form.Settings;
-        _settingsService.Save(_settings);
+        var next = form.Settings;
 
+        bool captureChanged =
+            next.Fps            != _settings.Fps            ||
+            next.Width          != _settings.Width          ||
+            next.Height         != _settings.Height         ||
+            next.BufferMinutes  != _settings.BufferMinutes  ||
+            next.BufferJpegQuality != _settings.BufferJpegQuality;
+
+        if (captureChanged && _orchestrator.BufferFrameCount > 0)
+        {
+            var frames = _orchestrator.BufferFrameCount;
+            var secs   = _settings.Fps > 0 ? frames / _settings.Fps : 0;
+            var dur    = secs >= 60 ? $"{secs / 60}m {secs % 60}s" : $"{secs}s";
+
+            var confirm = MessageBox.Show(
+                $"Changing capture settings will clear the current buffer ({dur} of footage).\n\nContinue?",
+                "Simple Replay", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+
+            if (confirm != DialogResult.Yes)
+                return;
+        }
+
+        _settings = next;
+        _settingsService.Save(_settings);
         RegisterHotkey();
-        _orchestrator.ApplySettings(_settings);
+
+        if (captureChanged)
+            _orchestrator.RestartCapture(_settings);
+        else
+            _orchestrator.UpdateEncodeSettings(_settings);
     }
 
     private void RegisterHotkey()

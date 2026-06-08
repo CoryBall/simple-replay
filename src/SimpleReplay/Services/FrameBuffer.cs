@@ -37,6 +37,24 @@ public sealed class FrameBuffer
         return _queue.ToArray().Select(f => f.JpegBytes).ToList();
     }
 
+    public (List<byte[]> Frames, double ActualFps) SnapshotWithFps(int fallbackFps)
+    {
+        var all = _queue.ToArray();
+        var frames = all.Select(f => f.JpegBytes).ToList();
+
+        if (all.Length < 2)
+            return (frames, fallbackFps);
+
+        var durationMs = all[^1].TimestampMs - all[0].TimestampMs;
+        var fps = durationMs > 0 ? (all.Length - 1) * 1000.0 / durationMs : fallbackFps;
+        return (frames, fps);
+    }
+
+    public void Clear()
+    {
+        while (_queue.TryDequeue(out _)) { }
+    }
+
     public int Count => _queue.Count;
 
     public long EstimatedRamBytes =>
